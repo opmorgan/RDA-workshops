@@ -3,6 +3,7 @@ title: "RDA R Workshop 1: Instructions"
 author: Owen Morgan
 format: html
 editor: visual
+embed-resources: true
 ---
 
 
