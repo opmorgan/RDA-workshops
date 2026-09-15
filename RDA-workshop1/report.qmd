@@ -27,7 +27,8 @@ The `echo: false` option disables the printing of code (only output is displayed
 
 ## An Interesting Image
 
-![A large pumpkin being weighed](/images/pumpkin.jpg){width=80%}
+![A large pumpkin being weighed](image/pumpkin.jpg){width=80%}
+
 Source: [Wikimedia](https://commons.wikimedia.org/wiki/File:Pointing_Up.jpg)
 
 

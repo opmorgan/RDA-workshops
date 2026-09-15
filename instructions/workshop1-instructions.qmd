@@ -1,0 +1,117 @@
+---
+title: "RDA R Workshop 1: Instructions"
+author: Owen Morgan
+format: html
+editor: visual
+embed-resources: true
+---
+
+# R workshop 1 - Display an interesting image
+
+Goals:
+
+Learn a how to use R to make a report
+
+- Install R and Rstudio
+
+- Set up a folder structure for organizing R projects
+
+- Make a new Rproject
+
+- Use Qmd to create a report that displays an interesting image
+
+## Instructions
+
+1.  (Install R)
+
+2.  (Install RStudio)
+
+3.  Create a folder where you will keep all of the exercises and analysis projects you run for this class. For example, it could be a folder in your Documents directory called `RDA-projects/`.
+
+4.  Create a “project” within this folder using RStudio
+
+    - Click: File \> New Project \> New Directory \> New Project.
+
+    - For “Directory name,” put “RDA-workshop1”
+
+    - For “Create project as a subdirectory of”, click “Browse” and select the `RDA-projects/` folder you made earlier.
+
+    - This will create a folder called `RDA-workshop1/` within `RDA-projects`/, and an “`.Rproj`” file that tells R where the "root" of the project is. This will make it easy to manage files like images and datasets later.
+
+5.  Rstudio has four panes open by default -- familiarize yourself with each of them:
+
+    - The “Editor” pane lets you edit files that you have open, such as R scripts or .Qmd files
+
+    - The “Files” pane is like Explorer or Finder -- you can use it to browse through folders and open files. It should show you your project folder with the .Rproj file in it.
+
+    - The “Console” pane is a place where you can enter R commands. Try typing in `2+2`, then press “Enter.”
+
+    - The “Environment” pane will show you variables that you create.
+
+6.  Create a variable
+
+    - Enter `temp <- 2+2` into the Console. This will create a variable called `test` with the value `4`. Then, enter `test` into the console to print its value. (“`<-`” is called the “assignment operator.” Here, it means “assign the value of 2+2 to the variable called `temp`”).
+
+7.  Install the package “tidyverse”
+
+    - The “tidyverse” library has many useful functions for working with data. Learn more about it here: <https://tidyverse.org/> In your Console, enter `install.packages(“tidyverse”)`
+
+8.  Create and run a script
+
+    - A script will let you save your code, so that you don’t have to type it into the console every time.
+
+    - Create a file called `script.R` (File \> New File \> R Script; then File \> Save)
+
+    - In the script editor, add code that calculates what 2 + 2 equals, storing the answer as a variable, and then prints out “2 + 2 = 4”:
+
+      ```{r}
+      #| eval: false
+      library(tidyverse) ## Load the tidyverse library (includes the package "stringr")
+
+      temp <- 2+2
+      text <- stringr::str_c("2 + 2 = ", temp) ## Combine two "strings" of letters
+      print(text)
+      ```
+
+    - Save the script, and then run it by clicking the “Run” button.
+
+    - Close the script
+
+9.  Create a Quarto Markdown document and “knit” it into a pdf report
+
+    - Like a script, a Quarto document will let you run saved R code. It will also enable you to display your results, along with text and images.
+
+    - Create a file called `report.Qmd`. (File \> New File \> Quarto Document. Set “Title” to “Report”, click the bubble next to “PDF (LaTeX) and click “Create.”)
+
+    - Install the package “tinytex” by typing the following in your **Terminal** (the tab next to Console): `quarto install tinytex`
+
+    - Knit the document by clicking “Render.” This will produce a pdf document that shows text, code, and its output.
+
+    - Find an interesting image on the wikimedia commons (https://commons.wikimedia.org/wiki/Main_Page). Download this image and put it in a folder called "images” (`RDA-projects/RDA-workshop1/images/`). (Each person should find their own image).
+
+    - Add markdown code to display the image at the end of your report. For example (be sure to update the caption, file path, and source link):
+
+      ``` markdown
+      ![A large pumpkin being weighed](/images/pumpkin.jpg){width=80%}
+
+      Source: [Wikimedia](https://commons.wikimedia.org/wiki/File:Pointing_Up.jpg)
+      ```
+
+    - Check out the documentation for more explanation, and examples of what you can do with quarto: <https://quarto.org/docs/authoring/figures.html>
+
+    - Knit the document to pdf again, and check that it looks as you want it to.
+
+10. Once your report is ready, compress the folder `RDA-workshop1/` into a zip file.
+
+- On MacOS, right click the folder and click "Compress"
+- On Windows11, right click and click "Compress \> Compress to zip"
+- **Submit the zip file with your code to the Moodle assignment "R workshop 1".**
+
+Extra credit: Back up your work to github.
+
+- Create a github repository for the folder `RDA-projects/`. This will enable you to save incremental backups of your work that you can recover later, and also can make it easier to share your code. Research “git” and “github” on your own and let me know if you have any questions. (By default, github repositories are publicly accessible. Make your repository “private”if you don’t want to share it with the world).
+
+![A large pumpkin being weighed](images/pumpkin.jpg){width=80%}
+
+Source: [Wikimedia](https://commons.wikimedia.org/wiki/File:Pointing_Up.jpg)
+
