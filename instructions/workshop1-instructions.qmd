@@ -107,9 +107,17 @@ Learn a how to use R to make a report
 - On Windows11, right click and click "Compress \> Compress to zip"
 - **Submit the zip file with your code to the Moodle assignment "R workshop 1".**
 
-Extra credit: Back up your work to github.
+## Instructions
+
+Extra credit: Learn more about Quarto
+
+- Read more about quarto in "R for Data Science": [https://r4ds.hadley.nz/quarto.html](https://r4ds.hadley.nz/quarto.html)
+
+Extra credit: Back up your work to github
 
 - Create a github repository for the folder `RDA-projects/`. This will enable you to save incremental backups of your work that you can recover later, and also can make it easier to share your code. Research “git” and “github” on your own and let me know if you have any questions. (By default, github repositories are publicly accessible. Make your repository “private”if you don’t want to share it with the world).
+
+## An interesting image
 
 ![A large pumpkin being weighed](images/pumpkin.jpg){width=80%}
 
