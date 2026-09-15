@@ -103,9 +103,9 @@ Learn a how to use R to make a report
 
 10. Once your report is ready, compress the folder `RDA-workshop1/` into a zip file.
 
-- On MacOS, right click the folder and click "Compress"
-- On Windows11, right click and click "Compress \> Compress to zip"
-- **Submit the zip file with your code to the Moodle assignment "R workshop 1".**
+  - On MacOS, right click the folder and click "Compress"
+  - On Windows11, right click and click "Compress \> Compress to zip"
+  - **Submit the zip file with your code to the Moodle assignment "R workshop 1".**
 
 ## Instructions
 
