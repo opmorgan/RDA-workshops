@@ -1,0 +1,152 @@
+---
+title: "R workshop 2 Instructions"
+format: html
+editor: visual
+embed-resources: true
+---
+
+```{r}
+#| include: false
+## Run the workshop code
+
+library(tidyverse)
+library(here)
+
+data_raw <- read_csv(here("data", "Ross_1_study_global_include_all_CLEAN_CASE.csv"))
+## Information from data dictionary:
+## ross.s1.1=percentage of peers; 
+## ross.s1.2=you; 
+##    values: 1=sign; 2=refuse; 
+##    ross.s1.1_1_TEXT & ross.s1.1_2_TEXT=percentage of peers who would respectively sign or refuse; 
+## It appears that variable1 and variable2 have the same information.
+
+## Give the key variables clearer names
+data <- data_raw |> mutate(percent_guess = ross.s1.1_1_TEXT,
+               choice = variable2) |> 
+                ## Now:
+                ## "estimate" refers to the percentage of peers who the person thinks would sign
+                ## "choice" refers to whether the participant would choose to sign the agreement
+  select(uID, choice, percent_guess, Country, Location)
+
+data |> group_by(choice) |> 
+  summarize(mean = mean(percent_guess),
+            sd = sd (percent_guess))
+
+data |> ggplot(aes(x = percent_guess, group = choice)) +
+  geom_density(aes(fill = choice), alpha = .5) +
+  theme_minimal()
+
+data_sign <- data |> filter(choice == "Sign")
+data_refuse <- data |> filter(choice == "Refuse")
+x = data_sign$percent_guess
+y = data_refuse$percent_guess
+t.test(x, y)
+
+## Another way to do the same thing (Recommended):
+library(emmeans)
+model <- lm(data = data, percent_guess ~ choice)
+## Show estimated mean for each group
+emmeans(model, ~ choice)
+
+## Compare the means of each group (equivalent to a t test)
+emmeans(model, ~ choice) |> 
+  contrast("pairwise")
+
+
+data |> ggplot(aes(x = percent_guess, group = choice)) +
+  geom_boxplot(aes(fill = choice), alpha = .5) +
+  theme_minimal()
+```
+
+# Goals:
+- Practice creating analysis reports with Quarto - this time, html reports
+- Practice finding and reanalyzing existing psychology datasets
+- Learn or practice how to load data in R
+- Learn or practice how to describe data in R
+- Bonus goals: Learn or practice how to visualize data and reproduce inferential statistics
+
+# Instructions
+
+## Skim the study we are reproducing
+
+- [Klein et al. (2018). “Many Labs 2”](https://journals.sagepub.com/doi/10.1177/2515245918810225#sec-6)
+  
+  - Read the abstract, and the section “13. False consensus: supermarket scenario (Ross, Greene, & House, 1977, Study 1)” (Starting on page 459)
+
+- [Ross et al. (1977)](https://www.sciencedirect.com/science/article/pii/002210317790049X)
+  - Read the abstract, the first paragraph of the Method section (p. 281), and the task materials -- the four “stories” described on pages 281-282). 
+What is the key statistical question that this study is asking? What are the two relevant variables? Discuss with your group until you have a confident answer. 
+
+## Set up a Quarto project (html report this time)
+- Make a fresh project for this workshop 
+- Make a new subfolder in RDA-projects called “RDA-workshop2”
+- Create a new “project” within this folder using RStudio (like you did last time)
+
+  - Click: File > New Project > New Directory > New Project. 
+  - For “Directory name,” put “RDA-workshop2”
+  - For “Create project as a subdirectory of”, click “Browse” and select the “RDA-projects” folder you made last time. 
+  - This will create (1) a folder called “RDA-workshop2” within “RDA-projects,” and (2) an “.Rproj” file that tells R that this is a project folder. 
+  
+- Create a new Quarto document with (File > New File > Quarto Document). 
+  - Name it “Report”, and this time, select “HTML” (the default) instead of pdf. 
+  - Experiment with a few of the cosmetic themes listed in the documentation here [https://quarto.org/docs/output-formats/html-themes.html](https://quarto.org/docs/output-formats/html-themes.html), and pick one that you like. Edit the header of your report.Qmd to use the theme (See the documentation page for an example).
+  - Click “render” to knit the report, and check that it looks like you expect.
+  - Then, delete all of the example code (everything from the word “quarto” to below)
+	
+## Download the data
+- Download the data reported in  Klein et al (2018) section 13: [https://osf.io/ux3eh/overview](https://osf.io/ux3eh/overview). Click “Download as zip” to get all the data. Open the zip folder, and look for the file: ```Ross_1_study_global_include_all_CLEAN_CASE.csv```.
+Note: if you are having trouble downloading the data from OSF, here is a copy of the file: [google drive](https://drive.google.com/file/d/1TBSxwAuzl9D8H3aaqoJAvIWkcM5qsXxU/view?usp=share_link)
+
+  - Here is a data dictionary explaining what the variables mean: [google drive](https://docs.google.com/spreadsheets/d/1dAHL9_Iadtx_hCO-BROu1TzDwJJuX07l/edit?usp=sharing&ouid=105419380224569492556&rtpof=true&sd=true)
+
+- Put this data file in your project folder in a subfolder called “data.”
+- In your quarto file report.qmd, create a new code chunk by clicking Code > - Insert chunk (or use the keyboard shortcut shown next to “Insert Chunk”). Add the following lines to load the libraries tidyverse and here:
+
+  ```{r}
+  #| eval: false
+  library(tidyverse)
+  library(here)
+  ```
+  
+- Load the data using `read_csv()`. Optionally, rename the variables to have clearer names:
+
+  ```{r}
+  #| eval: false
+  data_raw <- read_csv(here("data", "Ross_1_study_global_include_all_CLEAN_CASE.csv"))
+  
+  ## Give the key variables clearer names
+  data <- data_raw |> mutate(percent_guess = ross.s1.1_1_TEXT,
+                 choice = variable2) |> 
+                  ## Now:
+                  ## "estimate" refers to the percentage of peers who the person thinks would sign
+                  ## "choice" refers to whether the participant would choose to sign the agreement
+    select(uID, choice, percent_guess, Country, Location)
+  ```
+
+## Describe the participants responses
+- Use the `group_by()` and `summarize` functions to find the mean and standard deviation of the responses within each group (people who would choose “sign”, versus “refuse”). Refer to the examples on this documentation page: [https://dplyr.tidyverse.org/reference/summarise.html)](https://dplyr.tidyverse.org/reference/summarise.html)
+Display a table that shows the mean and standard deviation of each group’s “percentage” response. Do your results match the ones in the paper?
+```{r}
+library(gt)
+data |> group_by(choice) |> 
+  summarize(mean = mean(percent_guess),
+            sd = sd (percent_guess)) |> 
+  gt()
+```
+
+
+- “Render” your qmd report again, and verify that it shows your code, and a table with the mean and standard deviation of each group. Submit your project folder to moodle as a zip file, and if you have time, continue to the Extra credit challenges below. 
+
+
+
+## Extra credit: Reproduce the analyses in the paper, and visualize the results
+- Visualize the distribution of “%” ratings within each group. Use [ggplot](https://ggplot2.tidyverse.org/), which is included in the “tidyverse” package.  Try using `geom_density`.
+- Reproduce the analyses in the paper. Specifically, run a t-test comparing the groups (search “how to run a t test in R”, or ask me for example code). Compare your results to those reported in Klein et al. (2018).
+- Visualize the difference between groups using ggplot. Try a few different strategies (search the ggplot documentation to find out how):
+  - Box plot
+  - Mean with error bars
+  - Swarm plot (try the non-ggplot library ggbeeswarm)
+  - Swarm plot with overlaid mean and error bars
+  - Violin plots
+
+Once you find a style of visualization that you like, experiment with theme()  to find a visual design that you find clear and pleasant to look at (https://ggplot2.tidyverse.org/reference/theme.html. Replace “estimate” and “choice” with clearer labels, so that a naive viewer could understand what is going on. Submit whatever you have come up with at the end of class, or by Tuesday if you'd like to continue working your plots at home. 
