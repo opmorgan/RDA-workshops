@@ -94,7 +94,7 @@ What is the key statistical question that this study is asking? What are the two
   - Then, delete all of the example code (everything from the word “quarto” to below)
 	
 ## Download the data
-- Download the data reported in  Klein et al (2018) section 13: [https://osf.io/ux3eh/overview](https://osf.io/ux3eh/overview). Click “Download as zip” to get all the data. Open the zip folder, and look for the file: ```Ross_1_study_global_include_all_CLEAN_CASE.csv```.
+- Download the data reported in  Klein et al (2018) section 13: [https://osf.io/8cd4r/overview](https://osf.io/8cd4r/overview). Click “Download as zip” to get all the data. Open the zip folder, and look for the file: ```Ross_1_study_global_include_all_CLEAN_CASE.csv```.
 Note: if you are having trouble downloading the data from OSF, here is a copy of the file: [google drive](https://drive.google.com/file/d/1TBSxwAuzl9D8H3aaqoJAvIWkcM5qsXxU/view?usp=share_link)
 
   - Here is a data dictionary explaining what the variables mean: [google drive](https://docs.google.com/spreadsheets/d/1dAHL9_Iadtx_hCO-BROu1TzDwJJuX07l/edit?usp=sharing&ouid=105419380224569492556&rtpof=true&sd=true)
