@@ -1,52 +1,71 @@
 ---
-title: "Workshop 2"
-Author: Owen
+title: "Report"
 format: html
+editor: source
 embed-resources: true
 ---
 
-## Quarto
-
 ```{r}
-## Load packages
-library(tidyverse) ## Functions for loading and manipulating data
-library(here) ## This will help tell R where to find the data file
+library(tidyverse)
+library(here)
+```
 
 ## Load the data
-bob <- read_excel(here("data", "all_data.xlsx")) ## "Here" lets you specify a filepath relative to the project root
+```{r}
+data_raw <- read_csv(here("data", "Ross_1_study_global_include_all_CLEAN_CASE.csv"))
+## Information from data dictionary:
+## ross.s1.1=percentage of peers; 
+## ross.s1.2=you; 
+##    values: 1=sign; 2=refuse; 
+##    ross.s1.1_1_TEXT & ross.s1.1_2_TEXT=percentage of peers who would respectively sign or refuse; 
+## It appears that variable1 and variable2 have the same information.
 
-## Remove participants who didn't complete the task
-## (Specifically, remove anyone who is missing a value for any variable: age, gender, task response, etc)
-bob2 <- bob |> drop_na()
-
-bob2 |> count(quest_ver)
-## This yields 2290 participants -- 68 more than the 2222 reported in the paper.
-## There are 79 participants with questionnaire versions 5-10. (2222 - 79 = 2211
-
-## Following the authors' codebook, keep only participants who completed questionnaire version 1-4
-bob3 <- bob2 |> filter(quest_ver %in% c("1", "2", "3", "4"))
-## This yields 2211 participants -- 11 fewer than the 2222 reported in the paper.
-
-## Code handedness
-bob3 <- bob3 |> mutate(
-  handedness = case_when(
-    hand_score < 0 ~ "Left",
-    hand_score > 0 ~ "Right"
-  )
-)
+## Give the key variables clearer names
+data <- data_raw |> mutate(percent_guess = ross.s1.1_1_TEXT,
+               choice = variable2) |> 
+                ## Now:
+                ## "estimate" refers to the percentage of peers who the person thinks would sign
+                ## "choice" refers to whether the participant would choose to sign the agreement
+  select(uID, choice, percent_guess, Country, Location)
 ```
 
+## Describe the data
 ```{r}
-## Reproduce Table 1
-bob3 |> group_by(lab) |> 
-  count()
+data |> group_by(choice) |> 
+  summarize(mean = mean(percent_guess),
+            sd = sd (percent_guess))
 ```
 
+## Visualize the distrubution of responses in each group
 ```{r}
-## Summarize age
-bob |> 
-  summarize(age = mean(age))
+data |> ggplot(aes(x = percent_guess, group = choice)) +
+  geom_density(aes(fill = choice), alpha = .5) +
+  theme_minimal()
+```
 
+## Reproduce the analyses in the paper
+```{r}
+data_sign <- data |> filter(choice == "Sign")
+data_refuse <- data |> filter(choice == "Refuse")
+x = data_sign$percent_guess
+y = data_refuse$percent_guess
+t.test(x, y)
 
+## Another way to do the same thing (Recommended):
+library(emmeans)
+model <- lm(data = data, percent_guess ~ choice)
+## Show estimated mean for each group
+emmeans(model, ~ choice)
+
+## Compare the means of each group (equivalent to a t test)
+emmeans(model, ~ choice) |> 
+  contrast("pairwise")
+```
+
+## Visualize the group difference
+```{r}
+data |> ggplot(aes(x = percent_guess, group = choice)) +
+  geom_boxplot(aes(fill = choice), alpha = .5) +
+  theme_minimal()
 ```
 
