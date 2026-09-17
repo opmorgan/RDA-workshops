@@ -127,6 +127,7 @@ Note: if you are having trouble downloading the data from OSF, here is a copy of
 - Use the `group_by()` and `summarize` functions to find the mean and standard deviation of the responses within each group (people who would choose “sign”, versus “refuse”). Refer to the examples on this documentation page: [https://dplyr.tidyverse.org/reference/summarise.html)](https://dplyr.tidyverse.org/reference/summarise.html)
 Display a table that shows the mean and standard deviation of each group’s “percentage” response. Do your results match the ones in the paper?
 ```{r}
+#| echo: false
 library(gt)
 data |> group_by(choice) |> 
   summarize(mean = mean(percent_guess),
