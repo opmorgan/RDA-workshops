@@ -1,0 +1,124 @@
+---
+title: "Report - Workshop 3"
+format: html
+editor: source
+---
+
+# Thursday Sep 24: Load and clean the data
+
+## Load the data (Use the "qualtRics" package)
+
+```{r}
+library(here)
+library(tidyverse)
+library(qualtRics) ## Install this package with: install.packages("qualtRics")
+## This package makes it easy to load Qualtrics data. You could use read_csv(), but it's more fiddly
+
+## Load the survey data
+data_raw <- qualtRics::read_survey(here("data", "Ross survey_September 23, 2026_13.22.csv"))
+
+## Inspect the raw data
+data_raw |> head(10)
+data_raw |> View()
+## Question 1. Which rows and columns do think will be important for our analyses?
+## (We want to ask: are participants' estimates of what other people would choose biased towards what participants would choose themselves?)
+## Question 2. Are there any rows that shouldn't be included?
+## Question 3. Each participant's estimate of the percentage of others who would choose group papers, and individual papers, should sum to 100. Are there any participants where this is not the case?
+## Discuss these questions with your group, and put your answers in your individual .qmd report. (Write your answers in the whitespace outside of code chunks)
+```
+
+```{r}
+## Clean the data
+
+### Remove the "preview" participant
+data_clean <- data_raw |> filter(DistributionChannel != "preview")
+
+### Keep only the columns we are interested in: perception of others' choices (%), and participants' own choice (Individual papers, Group papers)
+### Keep "ResponseID" as an ID for each subject.
+### Q4: % voting for group; Q8: % voting for individual; Q5: own choice
+data_clean <- data_clean |> select(ResponseId, Q4, Q8, Q5)
+
+## Give these variables more meaningful names (You don't have to use the same names as the example)
+data_clean <- data_clean |> rename(perception_group = Q4, perception_individual = Q8, own_choice = Q5)
+```
+
+```{r}
+## Estimate the mean and SD of the % estimates of the participants from each group (groups: (1) participants who would choose group papers; (2) participants who would choose individual papers.
+## Arbitrarily choose one of the two "%" columns to focus on -- they each contain the same information. 
+## In my example, I will choose to focus on the "perception_group" column: according to the participant, what percentage of other people would choose group papers?
+## (Instructions: Refer to the example from workshop 2, and to the documentation of the "group_by" function).
+
+## What are the means from each group? 
+## What is the difference between the means?
+## Is the difference between the means in the direction predicted by the false consensus effect?
+data_clean |> group_by(own_choice) |>
+  summarize(mean_group = mean(perception_group),
+            sd = sd(perception_group))
+```
+
+```{r}
+## What is the actual percentage of students in the class who would vote for group papers?
+data_clean |> group_by(own_choice) |>
+  summarize(n = n(),
+            mean_group = mean(perception_group),
+            sd = sd(perception_group))
+8/14
+```
+
+```{r}
+## Visualize the distribution of scores in each group
+## Because there are so few data points, let's visualize every participant as a dot with "geom_dotplot"
+data_clean |> ggplot(aes(x = perception_group, group = own_choice)) +
+  geom_dotplot(aes(fill = own_choice), alpha = .5) +
+  theme_minimal() +
+  facet_wrap(~own_choice, nrow = 2)
+```
+
+# Thursday Oct 1: Test whether the group difference is statistically significant
+
+```{r}
+## Run a t test comparing the mean estimates from each group. Is the difference statistically significant?
+## Emmeans is a library that lets you run group comparisons (equivalent to t-tests), correlation tests, and also more complex analyses using "generalized linear models."
+## T-tests and correlation tests are both secretly special cases of linear models. 
+## I recommend using emmeans, and the linear model approach, because the syntax is simpler, and you can apply the same patterns when you run different analyses. Emmeans also makes it easy to find group means, and to find the size of differences and correlations.
+
+library(emmeans)
+model <- lm(data = data_clean, perception_group ~ own_choice) # Make the linear model
+## Show estimated mean for each group
+emmeans(model, ~ own_choice)
+
+## Compare the means of each group (equivalent to a t test)
+emmeans(model, ~ own_choice) |> 
+  contrast("pairwise")
+## "Estimate" tells you the difference between group means. "p value" tells you how likely you would be to observe a difference this large or greater (in either direction), if there were in fact no difference between groups (if the "statistical null hypothesis" were true). 
+## 
+```
+
+```{r}
+## Optional: compare your results to the "t.test" function
+## You should get the same results using the "t.test" function, assuming equal variance ("student's t test"):
+data_individual <- data_clean |> filter(own_choice == "Individual papers")
+data_group <- data_clean |> filter(own_choice == "Group papers")
+x = data_individual$perception_group
+y = data_group$perception_group
+t.test(x, y, var.equal = T)
+## This is fine, but I find t.test fiddly to work with, 
+```
+
+```{r}
+## Visualize the raw scores, means, and 95% confidence intervals around each group's mean
+## Instructions: Work with your group to figure out how to do this, based on documentation and examples you find online. Look at the documentation for stat_summary, and/or Google "how to plot 95% error bars with ggplot." If you are struggling, I can walk you through example code.
+## Optionally, add a vertical line indicating the real % of the class who would vote for group papers.
+
+library(Hmisc) # This package contains a function "mean_cl_normal" that makes it easy to pull out confidence intervals.
+data_clean |> ggplot(aes(x = perception_group, y = own_choice, color = own_choice, fill = own_choice)) +
+  geom_vline(xintercept = 57, linetype = "dashed" ) +
+  # 1. Plot the 95% CI error bars
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = 0.2, color = "gray20") +
+  # 2. Plot the group means as points
+  stat_summary(fun = mean, geom = "point", size = 3, show.legend = F) +
+  coord_cartesian(xlim = c(0, 100)) +
+  theme_minimal()
+```
+
+

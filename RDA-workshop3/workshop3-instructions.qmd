@@ -1,0 +1,97 @@
+---
+title: "Workshop 3a instructions"
+format: html
+editor: source
+---
+
+Today, your goals are to load the data that we collected last week, clean it, and estimate the means from each group. Is our data consistent with the false consensus effect?
+
+Next week, you'll run inferential tests to see when the difference between groups is significant, and make a visualization that shows the mean of each group, and confidence intervals that convey the uncertainty around our estimate.
+
+## Load the data and inspect it
+Find the data from qualtrics here:
+
+[Ross survey_September 23, 2026_13.22](https://drive.google.com/uc?export=download&id=1ym3Ab-2zuYaR8sFpcYyASHh4I5z8jbzI)
+
+The data from your own experiment will look something like this. It's a little bit messy.
+
+Set up a new project called "RDA-workshop3", with new "report.Qmd."
+
+Then, and add code to load the data:
+```{r}
+#| output: false
+library(here) ## So that you can tell R where to find files
+library(tidyverse) ## Functions for cleaning, summarizing and graphing data
+library(qualtRics) ## Install this package with: install.packages("qualtRics")
+## This package makes it easy to load Qualtrics data. You could use read_csv(), but it's more fiddly
+
+## Load the survey data
+data_raw <- qualtRics::read_survey(here("data", "Ross survey_September 23, 2026_13.22.csv"))
+
+## Inspect the raw data
+data_raw |> head(10) ## This will give you a quick preview of the first 10 rows, and first few columns of the dataset.
+```
+
+Inspect the data with the `View()` function:
+```{r}
+#| output: false
+data_raw |> View() ## This will open a viewer where you can click through to inspect the whole dataset as a spreadsheet.
+```
+
+Look over the data, and discuss the following questions with your group. Write an answer to each question in your individual `.qmd` report (write them in the whitespace ourside of code chunks, so that they show up in the report as text).
+
+- Question 1. Which rows and columns do think will be important for our analyses? (We want to ask: are participants' guesses of what other people would choose biased towards what participants would choose themselves?)
+- Question 2. Are there any rows that shouldn't be included? (The first row, with "Status: survey preview" is from when I ran the survey just to test that it was working. Are there any other suspicious rows?)
+- Question 3. Each participant's estimate of the percentage of others who would choose group papers, and individual papers, should sum to 100. Are there any participants where this is not the case?
+
+## Clean the data
+To clean the data, remove any rows that shouldn't be analyzed, and keep only the columns that we will use:
+```{r}
+#| output: false
+### Remove the "preview" participant
+data_clean <- data_raw |> filter(DistributionChannel != "preview")
+
+### Keep only the columns we are interested in: perception of others' choices (%), and participants' own choice (Individual papers, Group papers)
+### Keep "ResponseID" as an ID for each subject.
+### Q4: % voting for group; Q8: % voting for individual; Q5: own choice
+data_clean <- data_clean |> select(ResponseId, Q4, Q8, Q5)
+
+## Give these variables more meaningful names (You don't have to use the same names as the example)
+data_clean <- data_clean |> rename(perception_group = Q4, perception_individual = Q8, own_choice = Q5)
+```
+
+Next, find the **mean** and **standard deviation** of the guesses of the participants from each of the two group (groups: the participants who would choose group papers, and participants who would choose individual papers.) Additionally, count the number of participants in each group ("**n**") 
+
+Arbitrarily choose one of the two "%" columns to focus on -- they each contain the same information. In my example code, I will choose to focus on the "perception_group" column: according to the participant, what percentage of other people would choose group papers?
+
+Use the functions `group_by()` and `summarize()` to get the group means and standard deviations. The functions mean(), sd(), and n() should help you get the summary numbers shown below.  Refer to your code from workshop 2, and to the documentation of the `group_by()` function. (Find this documentation by typing `?group_by` in your console, or by googling "tidyverse group_by documentation").
+
+Optionally, use the function `gt()` from `library(gt)` to make your table look nice in the report.
+
+Your goal is to create a table that looks like this:
+```{r}
+#| echo: false
+## Estimate the mean and SD of the % estimates of the participants from each group (groups: (1) participants who would choose group papers; (2) participants who would choose individual papers.
+
+## What are the means from each group? 
+## What is the difference between the means?
+## Is the difference between the means in the direction predicted by the false consensus effect?
+library(gt)
+data_clean |> group_by(own_choice) |>
+  summarize(n = n(),
+            mean_group = mean(perception_group),
+            sd = sd(perception_group)) |> 
+  gt() |> 
+    tab_footnote(
+    footnote = "Mean response to: 'What % of your peers do you estimate would vote for group papers?'",
+    locations = cells_column_labels(columns = mean_group)
+  )
+```
+
+Discuss the following questions with your group, and write an answer to each question in your individual `.qmd` report.
+
+- Question 4. What are the means from each group? What do each of these two numbers mean, in common language?
+- Question 5: What is the difference between the means? Is this difference in the direction predicted by the false consensus effect?
+- Question 6: Should you take this difference as evidence that the effect is real? Why or why not? What additional information or analysis could help you decide how to interpret this difference?
+- Question 7: What is the actual percentage of students in the class who would vote for group papers?
+
