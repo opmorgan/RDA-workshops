@@ -1,0 +1,93 @@
+---
+title: "Toggle Sections with TOC"
+format: 
+  html:
+    toc: true
+    toc-depth: 2
+---
+
+```{text}
+#| echo: false
+#| results: asis
+# Injecting CSS and JS to handle section toggling
+cat('
+<style>
+.toggle-btn {
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  padding: 8px 16px;
+  cursor: pointer;
+  margin-right: 10px;
+  border-radius: 4px;
+}
+.toggle-btn.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #0056b3;
+}
+.hidden-section {
+  display: none;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const sec1 = document.getElementById("section-1");
+  const sec2 = document.getElementById("section-2");
+  const btn1 = document.getElementById("btn-sec1");
+  const btn2 = document.getElementById("btn-sec2");
+
+  function showSection1() {
+    sec1.classList.remove("hidden-section");
+    sec2.classList.add("hidden-section");
+    btn1.classList.add("active");
+    btn2.classList.remove("active");
+  }
+
+  function showSection2() {
+    sec2.classList.remove("hidden-section");
+    sec1.classList.add("hidden-section");
+    btn2.classList.add("active");
+    btn1.classList.remove("active");
+  }
+
+  btn1.addEventListener("click", showSection1);
+  btn2.addEventListener("click", showSection2);
+  
+  // Listen for TOC clicks to auto-switch views
+  document.querySelectorAll(".toc-actions a, #TOC a").forEach(link => {
+    link.addEventListener("click", function(e) {
+      const href = this.getAttribute("href");
+      if (href.startsWith("#section-1") || href.startsWith("#subsection-1")) {
+        showSection1();
+      } else if (href.startsWith("#section-2") || href.startsWith("#subsection-2")) {
+        showSection2();
+      }
+    });
+  });
+});
+</script>
+')
+```
+
+<!-- Navigation Buttons -->
+<button id="btn-sec1" class="toggle-btn active">Show Section 1</button>
+<button id="btn-sec2" class="toggle-btn">Show Section 2</button>
+
+::: {#section-1}
+## Section 1
+
+This is the content of the first section. 
+
+### Subsection 1.1
+This subsection will also show up beautifully in the TOC!
+:::
+
+::: {#section-2 .hidden-section}
+## Section 2
+
+This is the content of the second section, hidden by default.
+
+### Subsection 2.1
+This will also appear in the TOC, and clicking it will automatically toggle this view open.
+:::

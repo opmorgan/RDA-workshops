@@ -1,0 +1,220 @@
+---
+title: "Workshop 3b instructions"
+format: html
+editor: source
+embed-resources: true
+execute:
+  warning: false
+---
+
+Last week, you loaded the data from our false consensus effect study, cleaned it, and estimated the means from each group.
+
+This week, you'll run inferential tests to see when the difference between groups is significant, and make a visualization that shows the mean of each group, and confidence intervals that convey the uncertainty around our estimate.
+
+Use the same `.qmd` document from last week (`RDA-workshop3/report.qmd`). That way, you can reuse your code to load and clean the data. Then, add code at the end of the document to run inferential tests and visualizations.
+
+```{r}
+#| include: false
+#| echo: false
+#| output: false
+library(here)
+library(tidyverse)
+library(qualtRics) ## Install this package with: install.packages("qualtRics")
+## This package makes it easy to load Qualtrics data. You could use read_csv(), but it's more fiddly
+
+## Load the survey data
+data_raw <- qualtRics::read_survey(here("data", "Ross survey_September 23, 2026_13.22.csv"))
+
+## Inspect the raw data
+data_raw |> head(10)
+## Question 1. Which rows and columns do think will be important for our analyses?
+## (We want to ask: are participants' estimates of what other people would choose biased towards what participants would choose themselves?)
+## Question 2. Are there any rows that shouldn't be included?
+## Question 3. Each participant's estimate of the percentage of others who would choose group papers, and individual papers, should sum to 100. Are there any participants where this is not the case?
+## Discuss these questions with your group, and put your answers in your individual .qmd report. (Write your answers in the whitespace outside of code chunks)
+
+## Clean the data
+
+### Remove the "preview" participant
+data_clean <- data_raw |> filter(DistributionChannel != "preview")
+
+### Keep only the columns we are interested in: perception of others' choices (%), and participants' own choice (Individual papers, Group papers)
+### Keep "ResponseID" as an ID for each subject.
+### Q4: % voting for group; Q8: % voting for individual; Q5: own choice
+data_clean <- data_clean |> select(ResponseId, Q4, Q8, Q5)
+
+## Give these variables more meaningful names (You don't have to use the same names as the example)
+data_clean <- data_clean |> rename(perception_group = Q4, perception_individual = Q8, own_choice = Q5)
+
+## Estimate the mean and SD of the % estimates of the participants from each group (groups: (1) participants who would choose group papers; (2) participants who would choose individual papers.
+## Arbitrarily choose one of the two "%" columns to focus on -- they each contain the same information. 
+## In my example, I will choose to focus on the "perception_group" column: according to the participant, what percentage of other people would choose group papers?
+## (Instructions: Refer to the example from workshop 2, and to the documentation of the "group_by" function).
+
+## What are the means from each group? 
+## What is the difference between the means?
+## Is the difference between the means in the direction predicted by the false consensus effect?
+data_clean |> group_by(own_choice) |>
+  summarize(mean_group = mean(perception_group),
+            sd = sd(perception_group))
+
+## What is the actual percentage of students in the class who would vote for group papers?
+data_clean |> group_by(own_choice) |>
+  summarize(n = n(),
+            mean_group = mean(perception_group),
+            sd = sd(perception_group))
+8/14
+```
+
+## Visualize the scores from each group
+
+First, visualize every participant's score, sorted by group. One way to do this is with a "dotplot" that shows the individual data from each participant, sorted into bins. This works will when there are only a few datapoints.
+
+```{r}
+data_clean |> ggplot(aes(x = perception_group, group = own_choice)) +
+  geom_dotplot(aes(fill = own_choice), binwidth = 1, dotsize = 1) + 
+  theme_minimal() +
+  facet_wrap(~own_choice, nrow = 2) ## "Facet_wrap" makes a small plot for each group
+```
+
+Review this plot with your group. What do you notice about the distribution of the data?
+
+Experiment with different plot styles in ggplot (such as "theme_minimal" and theme_bw"). The example code used "theme_minimal." Which do you like best?
+[https://ggplot2.tidyverse.org/reference/ggtheme.html](https://ggplot2.tidyverse.org/reference/ggtheme.html)
+
+## Find 95% confidence intervals (CI) around each group's mean response
+
+Finding confidence intervals around each mean will give you some sense of the precision of our estimate. Generally, the more data you have, the more precise the estimate will be.
+
+I recommend using the package `emmeans` to find confidence intervals around group means. You can also use `emmeans` use run inferential tests like group comparisons (equivalent to t-tests), correlation tests, and more complex analyses. It's designed to give a consistent syntax to pull out estimate and confidence intervals for differences (like the difference in responses between group-paper voters and individual-paper voters) as well as the underlying grouo means (the "estimated marginal means (EMMEANS)").
+
+[https://rvlenth.github.io/emmeans/articles/AQuickStart.html](https://rvlenth.github.io/emmeans/articles/AQuickStart.html)
+
+```{r}
+library(emmeans) # As usual, you may need to install emmeans with install.packages("emmeans")
+library(gt) ## Use this package to make tables that look nice
+
+## First, make a linear model where group (group paper voter vs. individual paper voter) predicts perception (what & of peers would vote for group papers).
+model <- lm(data = data_clean, perception_group ~ own_choice)
+## T tests and correlation tests are both secretly linear models.
+## A linear model lets you estimate the difference between groups by fitting a line between the means from each group.
+## When the predictor only has two levels (group paper voter vs. individual paper voter), the fitted line is just the distance between the two means.
+
+## Show estimated mean for each group
+emmeans(model, ~ own_choice) |>  ## By default, emmeans will show you 95% confidence intervals ("lower.CL" and "upper.CL")
+  as_tibble() |> gt(caption = "95% CI") ## put the output into a table and print it
+
+## If you want to find a different confidence interval, you can use the confint() function:
+emmeans(model, ~ own_choice) |> 
+  confint(level = .99) |>  ## find 99% confidence intervals.
+  gt(caption = "99% CI")
+```
+
+The column "emmean" shows you the mean from each group. "lower.CL" and "upper.CL" show you the lower and upper bounds of the confidence interval around that estimated mean.
+
+## Find the mean difference between groups, and a 95% confidence interval around that estimate
+
+```{r}
+emmeans(model, ~ own_choice) |> 
+  contrast("pairwise", infer = F) |> confint() |> ## "pairwise" tells emeans that we want to compare each pair of groups in the model (in this case, there are only two groups)
+  gt(caption = "95% CI")
+```
+
+## Plot the group means and CI
+
+Follow the example code, giving your plot a descriptive title and axis labels.
+```{r}
+## First, save the estimates and CI boundaries from emmeans as a table
+plot_data <- emmeans(model, ~ own_choice) |> 
+  confint()
+
+## Then, use the table to make a plot with ggplot
+plot_data |> ggplot(aes(y = own_choice, x = emmean, group = own_choice))  +
+  geom_point() +
+  ## Use "geom_point" to plot the mean estimate
+  ## Use geom_linerange to plot the confidence bounds
+  geom_linerange(aes(xmin = lower.CL, xmax = upper.CL)) +
+  geom_vline(xintercept = 0) +
+  theme_minimal() +
+  theme(aspect.ratio = 1/3) + ## Make the plot skinny
+  labs(title = "Add a sensible title here",
+       x = "Add a sensible x axis label here",
+       y = "Add a sensible y axis label here")
+```
+
+Review your plot with your group. What does this plot reveal, that the dot plot did not? What did the dot plot reveal, that this plot does not?
+
+Optionally, experiment with the different error bar styles in ggplot. Which do you like best? Do any styles make the values or boundaries easier to see?
+[https://ggplot2.tidyverse.org/reference/geom_linerange.html](https://ggplot2.tidyverse.org/reference/geom_linerange.html)
+
+## Plot the group difference and its CI
+
+Follow the example code, giving your plot a descriptive title and x axis label. 
+
+```{r}
+## First, save the estimates and CI boundaries from emmeans as a table
+plot_data <- emmeans(model, ~ own_choice) |> 
+  contrast("pairwise", infer = F) |> confint()
+
+## Then, use the table to make a plot with ggplot
+plot_data |> ggplot(aes(y = contrast, x = estimate))  +
+  geom_point() +
+  ## Use "geom_point" to plot the mean estimate
+  ## Use geom_linerange to plot the confidence bounds
+  geom_linerange(aes(xmin = lower.CL, xmax = upper.CL)) +
+  geom_vline(xintercept = 0) +
+  theme_minimal() +
+  theme(aspect.ratio = 1/3) + ## Make the plot skinny
+  labs(title = "Add a sensible title here",
+       x = "Add a sensible x axis label here",
+       y = "")
+```
+
+
+## Run a t test comparing the mean estimates
+
+```{r}
+## To run a t-test with emmeans, just add "infer = T" to the code you used earlier to estimate the difference between groups.
+## This will give you the same results as the function t.test(), assuming equal variance ("student's t test").
+emmeans(model, ~ own_choice) |> 
+  contrast("pairwise", infer = T) |> 
+  as_tibble() |> gt() ## put the output into a table, and print with gt()
+
+## "Estimate" tells you the difference between group means. "p value" tells you how likely you would be to observe a difference this large or greater (in either direction), if there were in fact no difference between groups (if the "statistical null hypothesis" were true). 
+## 
+```
+
+As before, the column "estimate" tells you the difference between group means, and "lower.CL" and "upper.CL" tell you the 95% CI around that estimate. "t.ratio" tells you the T statistic for the test you've run: the distance between the null and observed distributions, scaled by the standard error. This statistic covaries exactly with the p value ("p.value). The p value tells you how likely you would be to observe a difference this large or greater, if there were in fact no difference between groups (if the "statistical null hypothesis" were true).
+
+## Questions
+Discuss the following question with your group, and submit your responses as a part of your report.
+
+- Question 1. What is the size of the difference in estimates between the groups? (in units of %)
+
+- Question 1b. What was the size of the effect in the original study? (For the term paper story we replicated, and across all four stories?) Look for these results in Table 1.
+
+[Ross 1977 pdf](https://drive.google.com/file/d/1NJvlaH74Kq6hNVj91qj2YflX1z8pL9ud/view?usp=share_link)
+
+- Question 1c. What was the size of the effect in the manylabs replication study? (The group means are reported on p. 460)
+
+[Manylabs2 pdf](https://drive.google.com/file/d/1jOX80NkVFkoObFoI8SAIHN0kwlPrsLa5/view?usp=share_link)
+
+- Question 1d. How does the difference we observed compare to the differences observed in these prior studies?
+
+- Question 2. What does the confidence interval around the group difference mean? How would you describe the interval in common english, and how would you interpret it? See "Notes" below for some advice on interpreting confidence intervals.
+
+- Question 3. What does the p value from the t test mean? How would you describe the results of the tests in common English, and how would you interpret this p value?
+
+- Question 4. What should we conclude on the basis of our study? Have we corroborated the false consensus effect? Have we challenged it? Or should we say something else?
+
+
+## Notes
+Here are a few ways to think about confidence intervals:
+
+- 95% of the time, the CI will include the true interval. (If we ran this study many times, on average, 5 out of every 100 CI would miss the true population value; 95 would include it). 
+- The value on the lower bound of the 95% CI can be rejected at alpha = .05. If that value were the real population difference, only 5% of the time would we observe a mean difference as large as the one we observed. If you ran a t-test using that value as the statistical null hypothesis, you would get the result p = .05. If you ran a t-test on values farther outside the 95% CI boundary, you would get p-values progressively smaller than .05 (for example, the value where p = .03 would be at the boundary of a 97% CI). So, if you are interested in whether a value is greater than zero, the 95% CI will tell you whether you can reject the hypothesis that the value is zero, at alpha = .05: if the 95% CI don't include zero, you can reject the null. If the 95% CI overlap zero, you can't reject the null.
+- A confidence interval gives you some sense of how precise your estimate is. If it is narrow, you can rule out many possible values of the effect.
+- For more on how to interpret confidence intervals, See Chapter 7 of Daniel Laken's Improving your statistical inferences: [https://lakens.github.io/statistical_inferences/07-CI.html](https://lakens.github.io/statistical_inferences/07-CI.html)
+
+A word of caution: Frequentist statistics like confidence intervals and p-values don't directly support claims like "We can be 95% confident that the effect is greater than .13 and less than 1.6." To do that, you would need to take into account the prior likelihood of the statistical hypotheses you are deciding between (i.e., by using Bayesian statistics). Frequentist test results might help convince you that a population value is likely greater than zero, but only in combination with additional assumptions, including assumptions about prior likelihoods. To see why, consider this example: a researcher runs an experiment and finds evidence that people can guess the identity of a playing card that they cannot see, using ESP (they guess just chance; p = .03). Does this mean you should be 97% confident that the true ESP effect is greater than zero?
+
