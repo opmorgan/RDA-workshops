@@ -122,7 +122,7 @@ data |> ggplot(aes(x = greed, y = lifesat)) +
 
 ## Test the correlation
 
-`Find the correlation coefficient *r*`, its 95% CI, and a p-value for the statistical null hypotheses of zero correlation.
+**Find the correlation coefficient *r***, its 95% CI, and a p-value for the statistical null hypotheses of zero correlation.
 
 The simplest way is to use the function `cor.test()` (be sure to change “data” to match the name of your data object):
 
