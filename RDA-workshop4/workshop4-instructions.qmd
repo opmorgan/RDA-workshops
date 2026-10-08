@@ -92,6 +92,7 @@ data |> summarize(n = n(), mean = mean(lifesat), sd = sd (lifesat)) |> gt(captio
 data |> ggplot(aes(x = greed, y = lifesat)) +
   geom_point() +
   theme_minimal() +
+  theme(aspect.ratio = 1/1) +
   labs(x = "Greed", y = "Life Satisfaction", title = "Association between Greed and Life Satisfaction")
 ```
 
@@ -103,6 +104,7 @@ Try using `geom_count()` instead of `geom_point()`:
 data |> ggplot(aes(x = greed, y = lifesat)) +
   geom_count(alpha = .5) +
   theme_minimal() +
+  theme(aspect.ratio = 1/1) +
   labs(x = "Greed", y = "Life Satisfaction", title = "Association between Greed and Life Satisfaction")
 ```
 
@@ -117,6 +119,7 @@ data |> ggplot(aes(x = greed, y = lifesat)) +
   geom_count(alpha = .5) +
   geom_smooth(method = "lm") +
   theme_minimal() +
+  theme(aspect.ratio = 1/1) +
   labs(x = "Greed", y = "Life Satisfaction", title = "Association between Greed and Life Satisfaction")
 ```
 
@@ -155,6 +158,7 @@ data_emm |> ggplot(aes(x = greed, y = lifesat)) +
   geom_count(alpha = .5) +
   geom_smooth(method = "lm") +
   theme_minimal() +
+  theme(aspect.ratio = 1/1) +
   labs(x = "Greed (normalized)", y = "Life Satisfaction (normalized)", title = "Association between Greed and Life Satisfaction")
 ```
 
