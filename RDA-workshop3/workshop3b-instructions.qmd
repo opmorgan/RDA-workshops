@@ -179,9 +179,6 @@ plot_data |> ggplot(aes(y = contrast, x = estimate))  +
 emmeans(model, ~ own_choice) |> 
   contrast("pairwise", infer = T) |> 
   as_tibble() |> gt() ## put the output into a table, and print with gt()
-
-## "Estimate" tells you the difference between group means. "p value" tells you how likely you would be to observe a difference this large or greater (in either direction), if there were in fact no difference between groups (if the "statistical null hypothesis" were true). 
-## 
 ```
 
 As before, the column "estimate" tells you the difference between group means, and "lower.CL" and "upper.CL" tell you the 95% CI around that estimate. "t.ratio" tells you the T statistic for the test you've run: the distance between the null and observed distributions, scaled by the standard error. This statistic covaries exactly with the p value ("p.value). The p value tells you how likely you would be to observe a difference this large or greater, if there were in fact no difference between groups (if the "statistical null hypothesis" were true).

@@ -1,0 +1,78 @@
+---
+title: "Report_workshop4"
+format: html
+embed-resources: TRUE
+---
+
+```{r}
+library(here)
+library(tidyverse)
+library(gt)
+
+data <- read_csv("data/cleandata.csv")
+
+head(data) |> gt()
+```
+
+```{r}
+## Find the mean and SD of the greed and life satisfaction variables
+data |> summarize(n = n(), mean = mean(greed), sd = sd (greed)) |> gt(caption = "Greed")
+
+data |> summarize(n = n(), mean = mean(lifesat), sd = sd (lifesat)) |> gt(caption = "Life Satisfaction")
+```
+
+```{r}
+## Make a scatterplot
+data |> ggplot(aes(x = greed, y = lifesat)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Greed", y = "Life Satisfaction", title = "Association between Greed and Life Satisfaction")
+```
+
+```{r}
+## Make a scatterplot (weighted by count)
+data |> ggplot(aes(x = greed, y = lifesat)) +
+  geom_count(alpha = .5) +
+  theme_minimal() +
+  labs(x = "Greed", y = "Life Satisfaction", title = "Association between Greed and Life Satisfaction")
+```
+
+```{r}
+## Add a line of best fit
+data |> ggplot(aes(x = greed, y = lifesat)) +
+  geom_count(alpha = .5) +
+  geom_smooth(method = "lm") +
+  theme_minimal() +
+  labs(x = "Greed", y = "Life Satisfaction", title = "Association between Greed and Life Satisfaction")
+```
+
+
+```{r}
+## Find r, p, and 95% CI with cor.test
+cor.test(data$greed, data$lifesat)
+
+cor.test(data$greed, data$lifesat) |> tidy() |> gt()
+```
+
+```{r}
+## Find r, p and 95% CI with emmeans
+library(emmeans)
+
+## First, scale the data to normalized units (so that a distance of 1 = 1 standard deviation)
+data_emm <- data |> mutate(greed = scale(greed), lifesat = scale(lifesat))
+
+# Fit a linear model, with one predictor (greed) and one DV (life satisfaction)
+model <- lm(lifesat ~ greed, data = data_emm)
+
+# Estimate the slope of the line of best fit
+emtrends(model, ~greed, var = "greed", infer = T) |> as_tibble() |> gt()
+
+## Plot the normalized data
+data_emm |> ggplot(aes(x = greed, y = lifesat)) +
+  geom_count(alpha = .5) +
+  geom_smooth(method = "lm") +
+  theme_minimal() +
+  labs(x = "Greed (normalized)", y = "Life Satisfaction (normalized)", title = "Association between Greed and Life Satisfaction")
+```
+
+

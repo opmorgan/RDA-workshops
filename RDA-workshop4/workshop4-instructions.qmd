@@ -1,0 +1,174 @@
+---
+title: "Workshop 4: Correlations. What is greed good for?"
+format: html
+embed-resources: TRUE
+---
+
+# Goals
+
+- Practice working with real psychological datasets in R
+
+- Practice visualizing and analyzing correlations
+
+- Concretely: Create your own version of the scatterplot Morling presents on page 206, showing the relationship between greed and life satisfaction. Interpret this data.
+
+
+# Background
+
+Skim the paper “Greed: What is it Good For?” (Hoyer et al., 2022). Specifically, read the abstract, review Table 2, and read the last two paragraph of the introduction (p. 602), where the authors explain a hypothesis about how greed might be causally related to well-being, and explain where to find their data. 
+
+Hoyer et al., 2022 [pdf](https://drive.google.com/file/d/1u4U8oRwXFRsDKHFWguDI1KvNe4WSm6EB/view?usp=share_link)
+
+**Question 1. In your own words, what hypotheses do the authors propose about how greed is related to well-being?**
+
+**Question 2. How did the authors operationalize greed and well-being? What questions did they ask people? (To find out more about the greed scale they used, you’ll need to follow the author’s citation to Seuntjens et al., 2015).**
+
+**Question 3. Where would you find the data to reproduce the authors’ results?**
+
+
+# Reproduce the correlation between greed and well-being
+
+
+**Create a new R project** in the folder `...RDA-projects/RDA-workshop4/`. (Make the folder `RDA-workshop4/` within `RDA-projects/`, then select File > New Project > Existing Directory, then select the folder `…RDA-projects/RDA-workshop4`).
+
+**Create a .qmd report and load libraries**. Create a new .qmd file (You could call it `report-workshop4.qmd)`, and make a code chunk. Load the libraries `tidyverse`, `here`, `gt`, and `emmeans`:
+```{r}
+#| output: false
+#| warnings: false
+
+library(tidyverse) # Functions for cleaning and plotting data
+library(here) # To manage filepaths
+library(gt) # To make pretty tables
+library(emmeans) # To run statistical analyses
+```
+
+```{r}
+#| include: false
+#| echo: false
+#| output: false
+
+data <- read_csv("data/cleandata.csv")
+```
+
+## Load and preview the data
+
+**Load the data**. Download the dataset, put it in a folder called data/, then add code to load it with read_csv(). Look to your code from workshop 2 for an example.
+
+The data can be found at the researchbox site mentioned in the paper, at the enf od the introduction You want “main data set clean”, which should include the dataset in a file called `cleandata.csv`, as well as a data dictionary called `cleandata.csv___CODEBOOK.csv`. Load `cleandata.csv` into R for analysis, and reference the “codebook” dictionary to figure out what the column names mean.
+
+**Preview the data**. Use the function `head()` to print the first 10 rows of the dataset. Optionally, make the output look nice using `gt()`.
+
+
+```{r}
+#| echo: false
+
+head(data) |> gt()
+```
+
+
+
+Review the data dictionary (for example, open the csv file cleandata.csv___CODEBOOK.csv with Apple’s quick preview, or in excel).
+
+**Question 4. Which columns are needed to reproduce the correlation tests described in ManyLabs? (Which are the two critical variables?)**
+
+Find the mean and standard deviation of each of the two critical variables, and report them:
+
+
+```{r}
+#| echo: false
+## Find the mean and SD of the greed and life satisfaction variables
+data |> summarize(n = n(), mean = mean(greed), sd = sd (greed)) |> gt(caption = "Greed")
+
+data |> summarize(n = n(), mean = mean(lifesat), sd = sd (lifesat)) |> gt(caption = "Life Satisfaction")
+```
+
+## Visualize the correlation
+
+**Make a scatterplot** showing the relationship between the two critical variables (use `ggplot()` and `geom_point()`). Give the x and y axis descriptive names (Refer to your code from workshop 3, and the documentation for `geom_point()`:
+
+```{r}
+#| echo: false
+## Make a scatterplot
+data |> ggplot(aes(x = greed, y = lifesat)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Greed", y = "Life Satisfaction", title = "Association between Greed and Life Satisfaction")
+```
+
+Try using `geom_count()` instead of `geom_point()`:
+
+```{r}
+#| echo: false
+## Make a scatterplot (weighted by count)
+data |> ggplot(aes(x = greed, y = lifesat)) +
+  geom_count(alpha = .5) +
+  theme_minimal() +
+  labs(x = "Greed", y = "Life Satisfaction", title = "Association between Greed and Life Satisfaction")
+```
+
+**Question 5. What does the “count” plot reveal that the “point” scatter plot did not?**
+
+**Add a line of best fit** using `geom_smooth(method = “lm”)`. This will run a linear model, finding the line that minimizes the squared vertical distance from all points. The shaded area shows 95% CI around the slope estimate.
+
+```{r}
+#| echo: false
+## Add a line of best fit
+data |> ggplot(aes(x = greed, y = lifesat)) +
+  geom_count(alpha = .5) +
+  geom_smooth(method = "lm") +
+  theme_minimal() +
+  labs(x = "Greed", y = "Life Satisfaction", title = "Association between Greed and Life Satisfaction")
+```
+
+## Test the correlation
+
+`Find the correlation coefficient *r*`, its 95% CI, and a p-value for the statistical null hypotheses of zero correlation.
+
+The simplest way is to use the function `cor.test()` (be sure to change “data” to match the name of your data object):
+
+```{r}
+## Find r, p, and 95% CI with cor.test
+# "data$greed" tells R to extract the column "greed" from the table "data"
+cor.test(data$greed, data$lifesat) 
+
+## Optionally, put the output of cor.test in a nicely formatted table:
+library(broom)
+cor.test(data$greed, data$lifesat) |> broom::tidy() |> gt()
+```
+
+You can also use `emmeans` to estimate the slope of the line of best fit. If you scale each of the two variables so that a distance of 1 corresponds to one standard deviation, the slope and 95% CI around this line are equivalent to *r*. Try both methods and compare the results:
+
+```{r}
+## Find r, p and 95% CI with emmeans
+
+## First, scale the data to normalized units (so that a distance of 1 = 1 standard deviation)
+data_emm <- data |> mutate(greed = scale(greed), lifesat = scale(lifesat))
+
+# Fit a linear model, with one predictor (greed) and one DV (life satisfaction)
+model <- lm(lifesat ~ greed, data = data_emm)
+
+# Estimate the slope of the line of best fit
+emtrends(model, ~greed, var = "greed", infer = T) |> as_tibble() |> gt(caption = "Estimated slope of the linear association between green and life satisfaction. 'greed.trend' is the slope of the line of best fit. When both variables are normally distributed, this value will be identical to the correlation coefficient r")
+
+## Plot the normalized data
+data_emm |> ggplot(aes(x = greed, y = lifesat)) +
+  geom_count(alpha = .5) +
+  geom_smooth(method = "lm") +
+  theme_minimal() +
+  labs(x = "Greed (normalized)", y = "Life Satisfaction (normalized)", title = "Association between Greed and Life Satisfaction")
+```
+
+**Question 6. What correlation coefficient *r* did you observe? What does it mean, numerically?**
+
+**Question 7. Is this correlation coefficient in the direction predicted by van Lange et al.’s hypothesis?**
+
+**Question 8. How large is the correlation coefficient? How does it compare to the example effect sizes in Morling’s table 8.4 (page 212)?**
+
+**Question 9. What do the *p* value and 95% confidence intervals around your estimated *r* mean?**
+
+**Question 10. What does this result suggest about the association between greed and well-being?**
+
+**Question 11. What does this result suggest about the causal hypotheses that predicted an association between greed and well-being?**
+
+**Question 12. Was our false consensus effect study correlational or experimental?**
+
