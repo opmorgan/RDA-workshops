@@ -47,29 +47,27 @@ library(emmeans) # To run statistical analyses
 #| echo: false
 #| output: false
 
-data <- read_csv("data/cleandata.csv")
+data <- read_csv(here("data", "cleandata.csv"))
 ```
 
 ## Load and preview the data
 
 **Load the data**. Download the dataset, put it in a folder called data/, then add code to load it with read_csv(). Look to your code from workshop 2 for an example.
 
-The data can be found at the researchbox site mentioned in the paper, at the enf od the introduction You want “main data set clean”, which should include the dataset in a file called `cleandata.csv`, as well as a data dictionary called `cleandata.csv___CODEBOOK.csv`. Load `cleandata.csv` into R for analysis, and reference the “codebook” dictionary to figure out what the column names mean.
+The data can be found at the researchbox site mentioned in the paper, at the end of the introduction. You want “main data set clean”, which should include the dataset in a file called `cleandata.csv`, as well as a data dictionary called `cleandata.csv___CODEBOOK.csv`. Load `cleandata.csv` into R for analysis, and reference the “codebook” dictionary to figure out what the column names mean.
 
 **Preview the data**. Use the function `head()` to print the first 10 rows of the dataset. Optionally, make the output look nice using `gt()`.
 
 
 ```{r}
 #| echo: false
-
 head(data) |> gt()
 ```
 
 
+Review the data dictionary (for example, open the csv file `cleandata.csv___CODEBOOK.csv` with Apple’s quick preview, or in excel).
 
-Review the data dictionary (for example, open the csv file cleandata.csv___CODEBOOK.csv with Apple’s quick preview, or in excel).
-
-**Question 4. Which columns are needed to reproduce the correlation tests described in ManyLabs? (Which are the two critical variables?)**
+**Question 4. Which columns are needed to reproduce the correlation test described in the Morling textbook (p. 206)? Which are the two critical variables?**
 
 Find the mean and standard deviation of each of the two critical variables, and report them:
 
@@ -151,7 +149,7 @@ data_emm <- data |> mutate(greed = scale(greed), lifesat = scale(lifesat))
 model <- lm(lifesat ~ greed, data = data_emm)
 
 # Estimate the slope of the line of best fit
-emtrends(model, ~greed, var = "greed", infer = T) |> as_tibble() |> gt(caption = "Estimated slope of the linear association between green and life satisfaction. 'greed.trend' is the slope of the line of best fit. When both variables are normally distributed, this value will be identical to the correlation coefficient r")
+emtrends(model, ~greed, var = "greed", infer = T) |> as_tibble() |> gt(caption = "Estimated slope of the linear association between green and life satisfaction. 'greed.trend' is the slope of the line of best fit. When both variables are normalized, this value will be identical to the correlation coefficient r")
 
 ## Plot the normalized data
 data_emm |> ggplot(aes(x = greed, y = lifesat)) +
