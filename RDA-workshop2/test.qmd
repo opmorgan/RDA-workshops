@@ -1,0 +1,30 @@
+---
+title: "manylabs"
+format: html
+---
+
+```{r}
+#"ross.s2.1_1_TEXT= % of peers who would pay the fine; 
+# ross.s2.1_2_TEXT=% of your peers who would go to court; 
+# ross.s2.2=would you pay the fine or appear in court? 1=pay, 2=appear in court"
+```
+```{r}
+library(tidyverse)
+library(here)
+
+data_raw <- read_csv(here("data", "False Consensus 2 (Ross et al., 1977)", "Ross.2", "Global", "Data", "Ross_2_study_global_include_all_CLEAN_CASE.csv"))
+```
+
+```{r}
+data <- data_raw |> mutate(percent_pay = ross.s2.1_1_TEXT,
+               own_choice = ross.s2.2) |> 
+  select(uID, percent_pay, own_choice, sex, Location, Country, Language)
+```
+
+```{r}
+## Demographics
+
+## Count the number of participants run at each study site
+data |> group_by(Location) |> count()
+```
+
